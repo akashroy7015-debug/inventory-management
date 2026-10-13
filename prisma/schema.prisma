@@ -1,0 +1,315 @@
+// StockHub — multi-tenant inventory platform.
+// Every business record carries an organizationId; all queries are scoped to it.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  STAFF
+}
+
+enum LocationType {
+  WAREHOUSE
+  STORE
+  AMAZON_FBA
+  FLIPKART_FC
+  OTHER
+}
+
+enum ChannelType {
+  WEBSITE
+  AMAZON
+  FLIPKART
+  OFFLINE
+  MEESHO
+  OTHER
+}
+
+enum MovementType {
+  PURCHASE
+  PRODUCTION
+  SALE
+  RETURN
+  CANCEL
+  ADJUSTMENT
+  DAMAGE
+  TRANSFER_IN
+  TRANSFER_OUT
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  COD
+  REFUNDED
+}
+
+model User {
+  id           String       @id @default(cuid())
+  name         String
+  email        String       @unique
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  memberships  Membership[]
+  movements    StockMovement[]
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  gstin       String?
+  phone       String?
+  email       String?
+  address     String?
+  state       String?
+  currency    String   @default("INR")
+  apiKey      String   @unique
+  orderSeq    Int      @default(0)
+  invoiceSeq  Int      @default(0)
+  invoicePrefix String @default("INV")
+  createdAt   DateTime @default(now())
+
+  memberships Membership[]
+  products    Product[]
+  skus        Sku[]
+  locations   Location[]
+  batches     Batch[]
+  stockLevels StockLevel[]
+  movements   StockMovement[]
+  channels    Channel[]
+  orders      Order[]
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role         @default(STAFF)
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+}
+
+model Product {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  brand          String?
+  category       String?
+  description    String?
+  hsnCode        String?
+  gstRate        Decimal      @default(0) @db.Decimal(5, 2)
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  skus           Sku[]
+
+  @@index([organizationId])
+}
+
+model Sku {
+  id                String       @id @default(cuid())
+  organizationId    String
+  productId         String
+  code              String
+  variantName       String?
+  barcode           String?
+  mrp               Decimal      @default(0) @db.Decimal(12, 2)
+  price             Decimal      @default(0) @db.Decimal(12, 2)
+  costPrice         Decimal      @default(0) @db.Decimal(12, 2)
+  weightGrams       Int?
+  lowStockThreshold Int          @default(10)
+  active            Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product           Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  batches           Batch[]
+  stockLevels       StockLevel[]
+  movements         StockMovement[]
+  listings          ChannelListing[]
+  orderItems        OrderItem[]
+
+  @@unique([organizationId, code])
+}
+
+model Location {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  type           LocationType @default(WAREHOUSE)
+  address        String?
+  isDefault      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stockLevels    StockLevel[]
+  movements      StockMovement[]
+  channels       Channel[]
+  orders         Order[]
+
+  @@index([organizationId])
+}
+
+model Batch {
+  id             String       @id @default(cuid())
+  organizationId String
+  skuId          String
+  batchNo        String
+  mfgDate        DateTime?
+  expiryDate     DateTime?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sku            Sku          @relation(fields: [skuId], references: [id], onDelete: Cascade)
+  stockLevels    StockLevel[]
+  movements      StockMovement[]
+
+  @@unique([skuId, batchNo])
+}
+
+/// Current on-hand quantity per SKU × location × batch.
+/// batchKey is the batch id, or "" for un-batched stock (keeps the unique index enforceable).
+model StockLevel {
+  id             String       @id @default(cuid())
+  organizationId String
+  skuId          String
+  locationId     String
+  batchId        String?
+  batchKey       String       @default("")
+  quantity       Int          @default(0)
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sku            Sku          @relation(fields: [skuId], references: [id], onDelete: Cascade)
+  location       Location     @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  batch          Batch?       @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@unique([skuId, locationId, batchKey])
+  @@index([organizationId])
+}
+
+/// Append-only ledger. Every change to StockLevel writes one row here.
+model StockMovement {
+  id             String       @id @default(cuid())
+  organizationId String
+  skuId          String
+  locationId     String
+  batchId        String?
+  quantity       Int
+  type           MovementType
+  reference      String?
+  note           String?
+  orderId        String?
+  userId         String?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sku            Sku          @relation(fields: [skuId], references: [id], onDelete: Cascade)
+  location       Location     @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  batch          Batch?       @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  order          Order?       @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([orderId])
+}
+
+model Channel {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  type           ChannelType
+  /// Units held back from this channel's advertised stock to avoid overselling.
+  bufferQty      Int          @default(0)
+  /// Fulfilment location stock is sold from. Null = the organization default location.
+  locationId     String?
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  location       Location?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  listings       ChannelListing[]
+  orders         Order[]
+
+  @@index([organizationId])
+}
+
+/// Maps an internal SKU to the SKU / ASIN / FSN used on a channel.
+model ChannelListing {
+  id          String  @id @default(cuid())
+  channelId   String
+  skuId       String
+  externalSku String
+  externalId  String?
+  channel     Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  sku         Sku     @relation(fields: [skuId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, externalSku])
+  @@unique([channelId, skuId])
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  organizationId  String
+  channelId       String
+  locationId      String?
+  orderNumber     String
+  externalOrderId String?
+  status          OrderStatus   @default(CONFIRMED)
+  paymentStatus   PaymentStatus @default(UNPAID)
+  paymentMethod   String?
+  customerName    String?
+  customerPhone   String?
+  customerEmail   String?
+  shippingAddress String?
+  customerGstin   String?
+  customerState   String?
+  subtotal        Decimal       @default(0) @db.Decimal(12, 2)
+  taxTotal        Decimal       @default(0) @db.Decimal(12, 2)
+  discount        Decimal       @default(0) @db.Decimal(12, 2)
+  shippingFee     Decimal       @default(0) @db.Decimal(12, 2)
+  total           Decimal       @default(0) @db.Decimal(12, 2)
+  invoiceNumber   String?
+  notes           String?
+  orderDate       DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  channel         Channel       @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  location        Location?     @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  items           OrderItem[]
+  movements       StockMovement[]
+
+  @@unique([organizationId, orderNumber])
+  @@unique([channelId, externalOrderId])
+  @@index([organizationId, orderDate])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  skuId     String?
+  name      String
+  skuCode   String
+  quantity  Int
+  /// Price per unit, GST inclusive.
+  unitPrice Decimal @db.Decimal(12, 2)
+  gstRate   Decimal @default(0) @db.Decimal(5, 2)
+  taxAmount Decimal @default(0) @db.Decimal(12, 2)
+  total     Decimal @db.Decimal(12, 2)
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sku       Sku?    @relation(fields: [skuId], references: [id], onDelete: SetNull)
+}
