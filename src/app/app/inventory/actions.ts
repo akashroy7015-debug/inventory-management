@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { requireOrg } from "@/lib/auth";
 import { formAction, optDate, optStr, str } from "@/lib/action";
 import { StockError, deductFefo, moveStock, resolveBatch, transferStock } from "@/lib/stock";
+import { afterStockChange } from "@/lib/integrations/sync";
 
 async function ownedIds(orgId: string, skuId: string, ...locationIds: string[]) {
   const [sku, locs] = await Promise.all([
@@ -37,6 +38,7 @@ export const stockIn = formAction(async (fd) => {
       reference: optStr(fd, "reference"), note: optStr(fd, "note"), userId: user.id,
     });
   });
+  afterStockChange(orgId);
   revalidatePath("/app", "layout");
   return `Added ${quantity} × ${sku.code}`;
 });
@@ -69,6 +71,7 @@ export const adjustStock = formAction(async (fd) => {
     else await deductFefo(tx, { ...base, quantity: -delta });
     return `${sku.code}: ${delta > 0 ? "+" : ""}${delta}`;
   });
+  afterStockChange(orgId);
   revalidatePath("/app", "layout");
   return msg;
 });
@@ -81,6 +84,7 @@ export const transfer = formAction(async (fd) => {
   const sku = await ownedIds(orgId, skuId, fromId, toId);
   const quantity = qty(fd);
   await db.$transaction((tx) => transferStock(tx, { orgId, skuId, fromId, toId, quantity, reference: optStr(fd, "reference"), userId: user.id }));
+  afterStockChange(orgId);
   revalidatePath("/app", "layout");
   return `Moved ${quantity} × ${sku.code}`;
 });

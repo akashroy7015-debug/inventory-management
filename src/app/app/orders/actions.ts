@@ -8,6 +8,7 @@ import { requireOrg } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formAction, optDate, optNum, optStr, str } from "@/lib/action";
 import { changeOrderStatus, createOrder, ensureInvoice } from "@/lib/orders";
+import { afterStockChange } from "@/lib/integrations/sync";
 
 const STATUSES: OrderStatus[] = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED", "RETURNED"];
 const PAYMENTS: PaymentStatus[] = ["UNPAID", "PAID", "COD", "REFUNDED"];
@@ -41,6 +42,7 @@ export const createOrderAction = formAction(async (fd) => {
     allowNegative: mode !== "pos" && str(fd, "allowNegative") === "on",
     userId: user.id,
   });
+  afterStockChange(orgId);
   revalidatePath("/app", "layout");
   redirect(mode === "pos" ? `/app/orders/${order.id}/invoice?pos=1` : `/app/orders/${order.id}`);
 });
@@ -50,6 +52,7 @@ export const updateStatus = formAction(async (fd) => {
   const status = str(fd, "status") as OrderStatus;
   if (!STATUSES.includes(status)) throw new Error("Invalid status");
   await changeOrderStatus(orgId, str(fd, "id"), status, { restock: str(fd, "restock") !== "off", userId: user.id });
+  afterStockChange(orgId);
   revalidatePath("/app", "layout");
   return status === "CANCELLED" ? "Order cancelled — stock returned" : status === "RETURNED" ? "Marked as returned" : "Status updated";
 });

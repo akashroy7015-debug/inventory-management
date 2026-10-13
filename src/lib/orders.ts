@@ -22,6 +22,8 @@ export type OrderInput = {
   shippingFee?: number;
   notes?: string | null;
   orderDate?: Date;
+  /** Ship from this location instead of the channel's (e.g. Amazon FBA orders). */
+  locationId?: string | null;
   /** Record the sale even when stock is short (marketplace orders are already sold). */
   allowNegative?: boolean;
   userId?: string | null;
@@ -39,7 +41,12 @@ export async function createOrder(orgId: string, input: OrderInput) {
   return db.$transaction(async (tx) => {
     const channel = await tx.channel.findFirst({ where: { id: input.channelId, organizationId: orgId } });
     if (!channel) throw new StockError("Unknown sales channel");
-    const locationId = channel.locationId ?? (await defaultLocationId(tx, orgId));
+    let locationId = channel.locationId ?? (await defaultLocationId(tx, orgId));
+    if (input.locationId) {
+      const loc = await tx.location.findFirst({ where: { id: input.locationId, organizationId: orgId } });
+      if (!loc) throw new StockError("Unknown location");
+      locationId = loc.id;
+    }
 
     const skus = await tx.sku.findMany({
       where: { organizationId: orgId, id: { in: input.items.map((i) => i.skuId) } },

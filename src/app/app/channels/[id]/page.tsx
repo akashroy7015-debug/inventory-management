@@ -7,6 +7,7 @@ import { channelAvailability } from "@/lib/stock";
 import { ActionForm, Submit } from "@/components/action-form";
 import { Card, PageHeader } from "@/components/ui";
 import { ChannelFields } from "../channel-fields";
+import { ConnectionCard } from "../connection-card";
 import { importOrders, saveMappings, updateChannel } from "../actions";
 
 const HELP: Record<string, { report: string; ext: string; idLabel: string }> = {
@@ -28,13 +29,16 @@ const HELP: Record<string, { report: string; ext: string; idLabel: string }> = {
 };
 
 export default async function ChannelPage({ params }: { params: Promise<{ id: string }> }) {
-  const { orgId } = await requireOrg();
+  const { orgId, role } = await requireOrg();
   const { id } = await params;
-  const channel = await db.channel.findFirst({ where: { id, organizationId: orgId } });
+  const channel = await db.channel.findFirst({ where: { id, organizationId: orgId }, include: { connection: true } });
   if (!channel) notFound();
-  const [locations, rows] = await Promise.all([
+  const [locations, rows, logs] = await Promise.all([
     db.location.findMany({ where: { organizationId: orgId }, orderBy: { createdAt: "asc" } }),
     channelAvailability(orgId, channel.id),
+    channel.connection
+      ? db.syncLog.findMany({ where: { connectionId: channel.connection.id }, orderBy: { startedAt: "desc" }, take: 10 })
+      : Promise.resolve([]),
   ]);
   const help = HELP[channel.type] ?? { report: "Upload a CSV with columns: order_id, order_date, sku, quantity, unit_price, customer_name.", ext: "Channel SKU", idLabel: "Listing ID" };
   const marketplace = channel.type !== "OFFLINE";
@@ -42,6 +46,9 @@ export default async function ChannelPage({ params }: { params: Promise<{ id: st
   return (
     <>
       <PageHeader title={channel.name} subtitle={<Link href="/app/channels" className="link">← All channels</Link>} />
+      <div className="mb-6">
+        <ConnectionCard channel={channel} connection={channel.connection} logs={logs} locations={locations} canEdit={role !== "STAFF"} />
+      </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Settings">
           <ActionForm action={updateChannel} className="space-y-3">
@@ -53,7 +60,7 @@ export default async function ChannelPage({ params }: { params: Promise<{ id: st
         </Card>
         {marketplace && (
           <div className="space-y-6">
-            <Card title="Import orders">
+            <Card title={channel.connection ? "Import orders from a file (optional)" : "Import orders"}>
               <p className="mb-3 text-sm text-slate-600">{help.report}</p>
               <ActionForm action={importOrders} reset className="space-y-3">
                 <input type="hidden" name="channelId" value={channel.id} />
@@ -80,7 +87,7 @@ export default async function ChannelPage({ params }: { params: Promise<{ id: st
           <p className="px-5 pt-4 text-sm text-slate-600">If {channel.name} uses a different SKU code than yours, enter it here. Leave blank to use your own SKU code.</p>
           <div className="overflow-x-auto">
             <table className="table">
-              <thead><tr><th>Your SKU</th><th>Product</th><th>{help.ext}</th><th>{help.idLabel}</th><th className="text-right">On hand</th><th className="text-right">Available here</th></tr></thead>
+              <thead><tr><th>Your SKU</th><th>Product</th><th>{help.ext}</th><th>{help.idLabel}</th><th className="text-right">On hand</th><th className="text-right">Available here</th>{channel.connection && <th className="text-right">Last sent</th>}</tr></thead>
               <tbody>{rows.map((r) => (
                 <tr key={r.skuId}>
                   <td className="font-mono text-xs">{r.sku}</td>
@@ -89,6 +96,7 @@ export default async function ChannelPage({ params }: { params: Promise<{ id: st
                   <td><input className="input font-mono text-xs" name={`id_${r.skuId}`} defaultValue={r.externalId ?? ""} /></td>
                   <td className="text-right">{r.onHand}</td>
                   <td className="text-right font-semibold">{r.available}</td>
+                  {channel.connection && <td className="text-right text-slate-500">{r.mapped ? r.lastPushedQty ?? "—" : "not linked"}</td>}
                 </tr>
               ))}</tbody>
             </table>

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { apiError, apiOrg, resolveChannel } from "@/lib/api";
 import { changeOrderStatus } from "@/lib/orders";
 import { StockError } from "@/lib/stock";
+import { afterStockChange } from "@/lib/integrations/sync";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,7 @@ export async function POST(req: NextRequest) {
   if (order.status === "CANCELLED") return NextResponse.json({ id: order.id, status: "CANCELLED" });
   try {
     const updated = await changeOrderStatus(org.id, order.id, "CANCELLED");
+    afterStockChange(org.id);
     return NextResponse.json({ id: updated.id, status: updated.status });
   } catch (e) {
     if (e instanceof StockError) return apiError(422, e.message);
