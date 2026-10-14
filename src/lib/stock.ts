@@ -162,6 +162,8 @@ export async function channelAvailability(orgId: string, channelId: string) {
     sku: s.code,
     externalSku: s.listings[0]?.externalSku ?? s.code,
     externalId: s.listings[0]?.externalId ?? null,
+    mapped: s.listings.length > 0,
+    lastPushedQty: s.listings[0]?.lastPushedQty ?? null,
     name: [s.product.name, s.variantName].filter(Boolean).join(" — "),
     onHand: onHand.get(s.id) ?? 0,
     available: Math.max(0, (onHand.get(s.id) ?? 0) - channel.bufferQty),

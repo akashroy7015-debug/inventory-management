@@ -45,6 +45,19 @@ enum MovementType {
   TRANSFER_OUT
 }
 
+enum IntegrationProvider {
+  SHOPIFY
+  WOOCOMMERCE
+  AMAZON
+  FLIPKART
+}
+
+enum ConnectionStatus {
+  CONNECTED
+  ERROR
+  DISCONNECTED
+}
+
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -95,6 +108,7 @@ model Organization {
   movements   StockMovement[]
   channels    Channel[]
   orders      Order[]
+  connections ChannelConnection[]
 }
 
 model Membership {
@@ -244,8 +258,51 @@ model Channel {
   location       Location?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
   listings       ChannelListing[]
   orders         Order[]
+  connection     ChannelConnection?
 
   @@index([organizationId])
+}
+
+/// A seller account on a marketplace / store platform linked to a channel.
+model ChannelConnection {
+  id               String              @id @default(cuid())
+  organizationId   String
+  channelId        String              @unique
+  provider         IntegrationProvider
+  /// AES-256-GCM encrypted JSON of the provider credentials.
+  credentials      String
+  /// Non-secret options, e.g. { "locationId": "...", "fbaLocationId": "..." }.
+  settings         Json                @default("{}")
+  status           ConnectionStatus    @default(CONNECTED)
+  accountName      String?
+  autoImportOrders Boolean             @default(true)
+  autoPushStock    Boolean             @default(true)
+  lastOrderSyncAt  DateTime?
+  lastStockSyncAt  DateTime?
+  lastError        String?
+  /// Set while a sync runs, so overlapping syncs skip instead of double-importing.
+  syncingSince     DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  organization     Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  channel          Channel             @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  logs             SyncLog[]
+
+  @@index([organizationId])
+}
+
+model SyncLog {
+  id           String            @id @default(cuid())
+  connectionId String
+  kind         String
+  ok           Boolean
+  summary      String
+  details      String?
+  startedAt    DateTime          @default(now())
+  finishedAt   DateTime          @default(now())
+  connection   ChannelConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId, startedAt])
 }
 
 /// Maps an internal SKU to the SKU / ASIN / FSN used on a channel.
@@ -255,6 +312,9 @@ model ChannelListing {
   skuId       String
   externalSku String
   externalId  String?
+  /// Last quantity successfully sent to the marketplace — lets syncs push only changes.
+  lastPushedQty Int?
+  lastPushedAt  DateTime?
   channel     Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
   sku         Sku     @relation(fields: [skuId], references: [id], onDelete: Cascade)
 

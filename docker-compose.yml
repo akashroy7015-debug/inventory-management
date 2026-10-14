@@ -18,5 +18,14 @@ services:
     environment:
       DATABASE_URL: postgresql://stockhub:stockhub@db:5432/stockhub
       AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env (openssl rand -base64 32)}
+      CRON_SECRET: ${CRON_SECRET:?Set CRON_SECRET in .env (openssl rand -hex 24)}
+  # Pulls marketplace orders and pushes stock every 10 minutes.
+  sync:
+    image: curlimages/curl:8.10.1
+    restart: unless-stopped
+    depends_on: [app]
+    environment:
+      CRON_SECRET: ${CRON_SECRET}
+    entrypoint: ["sh", "-c", "while true; do sleep 600; curl -fsS -H \"Authorization: Bearer $$CRON_SECRET\" http://app:3000/api/cron/sync > /dev/null || true; done"]
 volumes:
   pgdata:

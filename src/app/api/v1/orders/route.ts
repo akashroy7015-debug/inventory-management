@@ -5,6 +5,7 @@ import { apiError, apiOrg, resolveChannel } from "@/lib/api";
 import { createOrder } from "@/lib/orders";
 import { skuResolver } from "@/lib/import";
 import { StockError } from "@/lib/stock";
+import { afterStockChange } from "@/lib/integrations/sync";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,7 @@ export async function POST(req: NextRequest) {
       // The customer has already paid on the website — always record it.
       allowNegative: true,
     });
+    afterStockChange(org.id);
     return NextResponse.json({ id: order.id, order_number: order.orderNumber, status: order.status, duplicate: false }, { status: 201 });
   } catch (e) {
     if (e instanceof StockError) return apiError(422, e.message);

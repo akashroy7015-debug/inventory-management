@@ -13,14 +13,14 @@ export default async function ChannelsPage() {
   const { orgId } = await requireOrg();
   const since = new Date(Date.now() - 30 * 86_400_000);
   const [channels, locations, stats] = await Promise.all([
-    db.channel.findMany({ where: { organizationId: orgId }, include: { location: true, _count: { select: { listings: true } } }, orderBy: { createdAt: "asc" } }),
+    db.channel.findMany({ where: { organizationId: orgId }, include: { location: true, connection: true, _count: { select: { listings: true } } }, orderBy: { createdAt: "asc" } }),
     db.location.findMany({ where: { organizationId: orgId }, orderBy: { createdAt: "asc" } }),
     db.order.groupBy({ by: ["channelId"], where: { organizationId: orgId, orderDate: { gte: since }, status: { notIn: ["CANCELLED", "RETURNED"] } }, _sum: { total: true }, _count: true }),
   ]);
   const byChannel = new Map(stats.map((s) => [s.channelId, s]));
   return (
     <>
-      <PageHeader title="Sales channels" subtitle="Where you sell. Each channel draws from one stock pool, minus a safety buffer to prevent overselling." />
+      <PageHeader title="Sales channels" subtitle="Where you sell. Connect each marketplace account so orders flow in and stock updates go out automatically." />
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="grid gap-4 sm:grid-cols-2">
           {channels.map((c) => {
@@ -37,6 +37,13 @@ export default async function ChannelsPage() {
                   <div><dt className="text-xs text-slate-500">Stock from</dt><dd>{c.location?.name ?? "Default"}</dd></div>
                   <div><dt className="text-xs text-slate-500">Buffer · mapped SKUs</dt><dd>{c.bufferQty} · {c._count.listings}</dd></div>
                 </dl>
+                <div className="mt-3 text-xs">
+                  {c.connection ? (
+                    <Badge tone={c.connection.status === "CONNECTED" ? "green" : "red"}>
+                      {c.connection.status === "CONNECTED" ? `Live sync · ${label(c.connection.provider)}` : "Sync needs attention"}
+                    </Badge>
+                  ) : c.type === "OFFLINE" || c.type === "MEESHO" ? <span className="text-slate-400">File import / manual</span> : <span className="font-medium text-brand-700">Connect account →</span>}
+                </div>
               </Link>
             );
           })}

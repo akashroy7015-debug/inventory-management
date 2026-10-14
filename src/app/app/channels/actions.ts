@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { requireOrg, requireRole } from "@/lib/auth";
 import { formAction, str } from "@/lib/action";
 import { importOrderReport } from "@/lib/import";
+import { afterStockChange } from "@/lib/integrations/sync";
 
 const TYPES: ChannelType[] = ["WEBSITE", "AMAZON", "FLIPKART", "OFFLINE", "MEESHO", "OTHER"];
 
@@ -75,8 +76,9 @@ export const importOrders = formAction(async (fd) => {
   if (!(file instanceof File) || file.size === 0) throw new Error("Choose a CSV or TXT report file");
   if (file.size > 10 * 1024 * 1024) throw new Error("File is larger than 10 MB");
   const s = await importOrderReport(orgId, channelId, await file.text(), user.id);
+  if (s.created || s.cancelled) afterStockChange(orgId);
   revalidatePath("/app", "layout");
-  const head = `Imported ${s.created} orders · skipped ${s.skipped} (already imported or cancelled) · failed ${s.failed}`;
+  const head = `Imported ${s.created} orders · skipped ${s.skipped} (already imported or cancelled) · failed ${s.failed}${s.cancelled ? ` · ${s.cancelled} cancelled & restocked` : ""}${s.updated ? ` · ${s.updated} status updates` : ""}`;
   if (s.messages.length) {
     if (!s.created) throw new Error([head, ...s.messages.slice(0, 10)].join("\n"));
     return [head, ...s.messages.slice(0, 10)].join("\n");
