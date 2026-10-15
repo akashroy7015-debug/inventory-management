@@ -13,7 +13,12 @@ export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
   if (!secret) return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 503 });
   if (req.headers.get("authorization") !== `Bearer ${secret}`) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return NextResponse.json(await runScheduledSync());
+  try {
+    return NextResponse.json(await runScheduledSync());
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: "Sync failed — open /api/health to check the database", detail: (e as Error).message.slice(0, 200) }, { status: 500 });
+  }
 }
 
 export const POST = GET;
