@@ -35,14 +35,14 @@ npm run db:seed                 # optional demo: demo@moriveda.in / demo1234
 npm run dev                     # http://localhost:3000
 ```
 
-Checks: `npm run typecheck`, `npm run lint`, `npm test`.
+Checks: `npm run typecheck`, `npm run lint`, `npm test`. In production, `GET /api/health` reports whether the database and required env vars are set up.
 
 ## Deploy (publish for everyone)
 
 **Option A — Vercel + Neon (easiest, free tiers available)**
 1. Create a Postgres database at [neon.tech](https://neon.tech) (or Supabase) and copy its connection string.
 2. Import this GitHub repo in [vercel.com](https://vercel.com). Add env vars `DATABASE_URL`, `AUTH_SECRET` (`openssl rand -base64 32`), `CRON_SECRET` (`openssl rand -hex 24`) and `TZ=Asia/Kolkata`.
-3. Set the build command to `npm run db:deploy && npm run build`.
+3. Leave the build command on Vercel's default: the `vercel-build` script (`scripts/vercel-build.mjs`) applies database migrations on production deploys before building; preview deploys skip migrations.
 4. Point a domain (e.g. `app.yourbrand.in`) at the Vercel project.
 5. Schedule marketplace syncing: Vercel's free plan runs `vercel.json`'s cron once a day, so also create a free job at [cron-job.org](https://cron-job.org) that calls `https://<your-app>/api/cron/sync` every 10 minutes with header `Authorization: Bearer <CRON_SECRET>`. (On Vercel Pro you can change the schedule in `vercel.json` to `*/10 * * * *` instead.)
 
