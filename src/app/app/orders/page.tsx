@@ -3,7 +3,7 @@ import { Plus, Upload } from "lucide-react";
 import type { OrderStatus, Prisma } from "@prisma/client";
 import { requireOrg } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { date, label, money } from "@/lib/format";
+import { date, endOfDay, label, money, startOfDay } from "@/lib/format";
 import { Badge, Card, Empty, PageHeader, channelTone, statusTone } from "@/components/ui";
 
 export const metadata = { title: "Orders" };
@@ -31,8 +31,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   }
   if (sp.from || sp.to) {
     where.orderDate = {
-      ...(sp.from ? { gte: new Date(sp.from) } : {}),
-      ...(sp.to ? { lte: new Date(`${sp.to}T23:59:59`) } : {}),
+      ...(sp.from ? { gte: startOfDay(sp.from) } : {}),
+      ...(sp.to ? { lte: endOfDay(sp.to) } : {}),
     };
   }
   const orders = await db.order.findMany({

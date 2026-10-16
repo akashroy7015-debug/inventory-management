@@ -29,7 +29,7 @@ export function DailyColumns({ days, values, format }: { days: string[]; values:
         <div key={d} className="group relative flex h-full flex-1 items-end">
           <div className="w-full rounded-t bg-brand-500/80 transition group-hover:bg-brand-600" style={{ height: `${Math.max(values[i] > 0 ? 3 : 0, (values[i] / max) * 100)}%` }} />
           <div className="pointer-events-none absolute -top-8 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white group-hover:block">
-            {new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}: {format(values[i])}
+            {new Date(`${d}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" })}: {format(values[i])}
           </div>
         </div>
       ))}
@@ -39,10 +39,7 @@ export function DailyColumns({ days, values, format }: { days: string[]; values:
 
 export function lastNDays(n: number) {
   const out: string[] = [];
-  for (let i = n - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    out.push(dayKey(d));
-  }
+  const now = Date.now();
+  for (let i = n - 1; i >= 0; i--) out.push(dayKey(new Date(now - i * 86_400_000)));
   return out;
 }
