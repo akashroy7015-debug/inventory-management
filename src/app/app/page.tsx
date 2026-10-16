@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Circle } from "lucide-react";
 import { requireOrg } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { date, daysUntil, int, label, money } from "@/lib/format";
+import { date, dayKey, daysUntil, int, label, money, startOfDay } from "@/lib/format";
 import { batchesWithStock, salesSummary, skusWithStock } from "@/lib/queries";
 import { Badge, Card, Empty, PageHeader, Stat, channelTone, statusTone } from "@/components/ui";
 import { Bars, DailyColumns, lastNDays } from "@/components/bars";
@@ -11,8 +11,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const { orgId, org, user } = await requireOrg();
   const { welcome } = await searchParams;
   const since = new Date(Date.now() - 30 * 86_400_000);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = startOfDay(dayKey(new Date()));
 
   const [skus, batches, sales, todaySales, recent, movementCount, listingCount] = await Promise.all([
     skusWithStock(orgId, { activeOnly: true }),

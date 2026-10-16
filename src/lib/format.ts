@@ -15,14 +15,17 @@ export function int(v: unknown) {
   return new Intl.NumberFormat("en-IN").format(num(v));
 }
 
+/** Business time zone for dates and "today" (servers usually run on UTC). */
+export const APP_TIMEZONE = process.env.APP_TIMEZONE || "Asia/Kolkata";
+
 export function date(d: Date | string | null | undefined) {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: APP_TIMEZONE });
 }
 
 export function dateTime(d: Date | string | null | undefined) {
   if (!d) return "—";
-  return new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  return new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: APP_TIMEZONE });
 }
 
 export function daysUntil(d: Date | string) {
@@ -69,7 +72,27 @@ export function rupeesInWords(amount: number) {
   return `${words} Rupees${paise ? ` and ${twoDigits(paise)} Paise` : ""} Only`;
 }
 
-/** yyyy-mm-dd in the server's local time zone (set TZ=Asia/Kolkata in production). */
-export function dayKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+/** yyyy-mm-dd of an instant, in the business time zone. */
+export function dayKey(d: Date, timeZone = APP_TIMEZONE) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+}
+
+/** UTC offset of a time zone at an instant, as "+05:30" / "-04:00" / "Z". */
+function offsetAt(d: Date, timeZone: string) {
+  const name = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "longOffset" })
+    .formatToParts(d)
+    .find((p) => p.type === "timeZoneName")?.value;
+  const m = name?.match(/GMT([+-]\d{2}:\d{2})/);
+  return m ? m[1] : "Z";
+}
+
+/** First instant of a yyyy-mm-dd day in the business time zone. */
+export function startOfDay(day: string, timeZone = APP_TIMEZONE) {
+  return new Date(`${day}T00:00:00${offsetAt(new Date(`${day}T12:00:00Z`), timeZone)}`);
+}
+
+/** Last millisecond of a yyyy-mm-dd day in the business time zone. */
+export function endOfDay(day: string, timeZone = APP_TIMEZONE) {
+  const next = new Date(new Date(`${day}T12:00:00Z`).getTime() + 86_400_000);
+  return new Date(startOfDay(dayKey(next, "UTC"), timeZone).getTime() - 1);
 }

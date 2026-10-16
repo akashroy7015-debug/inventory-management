@@ -1,7 +1,11 @@
+import { dayKey, endOfDay, startOfDay } from "@/lib/format";
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Report period in the business time zone; defaults to this month so far. */
 export function parseRange(sp: { from?: string; to?: string }) {
-  const now = new Date();
-  const from = sp.from ? new Date(sp.from) : new Date(now.getFullYear(), now.getMonth(), 1);
-  const to = sp.to ? new Date(`${sp.to}T23:59:59.999`) : now;
-  const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  return { from, to, fromStr: iso(from), toStr: iso(to) };
+  const today = dayKey(new Date());
+  const fromStr = sp.from && DAY.test(sp.from) ? sp.from : `${today.slice(0, 8)}01`;
+  const toStr = sp.to && DAY.test(sp.to) ? sp.to : today;
+  return { from: startOfDay(fromStr), to: endOfDay(toStr), fromStr, toStr };
 }
