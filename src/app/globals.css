@@ -1,13 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #f0fdf4;
-  --color-brand-100: #dcfce7;
-  --color-brand-500: #22a55a;
-  --color-brand-600: #16843f;
-  --color-brand-700: #146c36;
+  --color-brand-50: #eef6e8;
+  --color-brand-100: #dbeccf;
+  --color-brand-200: #bfe0b5;
+  --color-brand-500: #2e8b4f;
+  --color-brand-600: #1f6b3a;
+  --color-brand-700: #14502a;
   --color-brand-900: #0f3d22;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-ink: #101a14;
+  --color-ink-2: #1a2820;
+  --color-muted: #4a5750;
+  --color-subtle: #5b6860;
+  --color-line: #e4e8e2;
+  --color-mist: #f6f8f5;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-geist), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 @layer base {
@@ -29,4 +38,11 @@
   .table td { @apply border-b border-slate-100 px-3 py-2.5 align-middle; }
   .table tr:last-child td { @apply border-b-0; }
   .link { @apply font-medium text-brand-700 hover:underline; }
+  .eyebrow { @apply text-sm font-semibold uppercase tracking-[0.06em] text-brand-600; }
+  .display { @apply font-display font-bold tracking-[-0.03em] text-ink; }
+  .pill-primary { @apply inline-flex min-h-[52px] items-center justify-center gap-2.5 rounded-full bg-brand-600 px-7 text-[17px] font-semibold text-white transition hover:bg-brand-700; }
+  .auth-form .input { @apply min-h-12 rounded-xl px-3.5 text-base shadow-none focus:border-brand-600 focus:ring-brand-200; }
+  .auth-form .label { @apply mb-1.5 text-sm font-medium text-ink; }
+  .auth-form .btn-primary { @apply mt-1.5 min-h-[52px] rounded-full text-[17px] font-semibold shadow-none; }
+  .pill-ghost { @apply inline-flex min-h-[52px] items-center justify-center rounded-full border border-[#d5dad4] px-6 text-[17px] font-medium text-ink transition hover:border-ink; }
 }

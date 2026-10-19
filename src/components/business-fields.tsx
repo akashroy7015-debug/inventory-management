@@ -5,7 +5,7 @@ export function BusinessFields() {
     <>
       <div>
         <label className="label" htmlFor="company">Business / brand name</label>
-        <input className="input" id="company" name="company" required placeholder="e.g. Moriveda" />
+        <input className="input" id="company" name="company" required placeholder="e.g. Moriveda" autoComplete="organization" />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>

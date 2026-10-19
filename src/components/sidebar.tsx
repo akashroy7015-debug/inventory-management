@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { LogoMark } from "./logo";
 import {
   BarChart3, Boxes, CalendarClock, Code2, LayoutDashboard, Menu, Package, Plug,
   Settings, ShoppingCart, Store, Warehouse, X,
@@ -29,13 +30,13 @@ export function Sidebar({ appName, footer }: { appName: string; footer: React.Re
   return (
     <>
       <div className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 lg:hidden">
-        <span className="flex items-center gap-2 font-semibold text-brand-900"><Boxes className="h-5 w-5 text-brand-600" />{appName}</span>
+        <span className="flex items-center gap-2 font-display text-lg font-bold tracking-[-0.02em] text-ink"><LogoMark className="h-7 w-7" />{appName}</span>
         <button className="btn btn-sm" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}</button>
       </div>
       <aside className={`${open ? "block" : "hidden"} fixed inset-y-0 left-0 z-40 w-64 border-r border-slate-200 bg-white lg:block print:hidden`}>
         <div className="flex h-full flex-col">
-          <Link href="/app" className="hidden items-center gap-2 px-5 py-5 text-lg font-semibold text-brand-900 lg:flex">
-            <Boxes className="h-6 w-6 text-brand-600" /> {appName}
+          <Link href="/app" className="hidden items-center gap-2.5 px-5 py-5 font-display text-xl font-bold tracking-[-0.02em] text-ink lg:flex">
+            <LogoMark /> {appName}
           </Link>
           <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
             {NAV.map(({ href, label, icon: Icon }) => (
