@@ -9,9 +9,9 @@ import { StockForms } from "./stock-forms";
 
 export const metadata = { title: "Inventory" };
 
-export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ q?: string; filter?: string; sku?: string }> }) {
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ q?: string; filter?: string; sku?: string; tab?: string; to?: string }> }) {
   const { orgId } = await requireOrg();
-  const { q = "", filter, sku } = await searchParams;
+  const { q = "", filter, sku, tab, to } = await searchParams;
   const [all, locations] = await Promise.all([
     skusWithStock(orgId, { activeOnly: true }),
     db.location.findMany({ where: { organizationId: orgId }, orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }] }),
@@ -58,6 +58,8 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
             skus={all.map((s) => ({ id: s.id, label: `${s.code} — ${s.name}` }))}
             locations={locations.map((l) => ({ id: l.id, label: l.name }))}
             defaultSku={sku}
+            defaultTab={tab === "transfer" || tab === "adjust" ? tab : "in"}
+            defaultTo={locations.some((l) => l.id === to) ? to : undefined}
           />
         </div>
       </div>

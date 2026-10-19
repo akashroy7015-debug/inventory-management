@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, Circle } from "lucide-react";
+import { AlertTriangle, ArrowRight, Boxes, Check, IndianRupee, TrendingUp } from "lucide-react";
 import { requireOrg } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { date, dayKey, daysUntil, int, label, money, startOfDay } from "@/lib/format";
+import { APP_TIMEZONE, date, dayKey, daysUntil, int, label, money, startOfDay } from "@/lib/format";
 import { batchesWithStock, salesSummary, skusWithStock } from "@/lib/queries";
 import { Badge, Card, Empty, PageHeader, Stat, channelTone, statusTone } from "@/components/ui";
 import { Bars, DailyColumns, lastNDays } from "@/components/bars";
@@ -36,48 +36,97 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     { done: recent.length > 0, label: "Record or import your first order", href: "/app/orders" },
   ];
 
+  const done = steps.filter((s) => s.done).length;
+  const now = new Date();
+  const hour = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hourCycle: "h23", timeZone: APP_TIMEZONE }).format(now));
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const firstName = user.name.split(" ")[0];
+  const attention = low.length + expiring.length;
+
   return (
     <>
       <PageHeader
-        title={welcome ? `Welcome, ${user.name.split(" ")[0]}!` : org.name}
-        subtitle="Stock and sales across every channel, in one place."
+        eyebrow={now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: APP_TIMEZONE })}
+        title={welcome ? `Welcome to ${org.name}, ${firstName}!` : `${greeting}, ${firstName}`}
+        subtitle={`Here’s how ${org.name} is doing across every channel.`}
         actions={<><Link href="/app/pos" className="btn">New offline sale</Link><Link href="/app/inventory" className="btn btn-primary">Stock in</Link></>}
       />
 
-      {steps.some((s) => !s.done) && (
-        <Card title="Get started" className="mb-6">
-          <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.map((s) => (
+      {done < steps.length && (
+        <section className="mb-6 overflow-hidden rounded-2xl bg-ink text-white">
+          <div className="flex flex-wrap items-end justify-between gap-3 px-5 pt-5 sm:px-6">
+            <div>
+              <h2 className="font-display text-xl font-bold tracking-[-0.02em] text-white">Finish setting up</h2>
+              <p className="mt-1 text-sm text-white/65">{steps.length - done} {steps.length - done === 1 ? "step" : "steps"} left before every channel runs from one stock count.</p>
+            </div>
+            <div className="text-sm font-medium text-white/80">{done} of {steps.length} done</div>
+          </div>
+          <div className="mx-5 mt-4 h-1.5 rounded-full bg-white/10 sm:mx-6" role="progressbar" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={done} aria-label="Setup progress">
+            <div className="h-1.5 rounded-full bg-brand-500 transition-all" style={{ width: `${(done / steps.length) * 100}%` }} />
+          </div>
+          <ol className="grid gap-2 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-4">
+            {steps.map((s, i) => (
               <li key={s.label}>
-                <Link href={s.href} className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm ${s.done ? "border-green-200 bg-green-50 text-green-800" : "border-slate-200 hover:border-brand-500"}`}>
-                  {s.done ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4 text-slate-400" />} {s.label}
+                <Link href={s.href} className={`group flex min-h-14 items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition ${s.done ? "bg-white/5 text-white/55" : "bg-white/10 text-white hover:bg-white/15"}`}>
+                  <span aria-hidden="true" className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${s.done ? "bg-brand-600 text-white" : "border border-white/30 text-white"}`}>
+                    {s.done ? <Check className="h-4 w-4" /> : i + 1}
+                  </span>
+                  <span className={s.done ? "line-through decoration-white/30" : ""}>{s.label}</span>
+                  {!s.done && <ArrowRight aria-hidden="true" className="ml-auto h-4 w-4 shrink-0 opacity-60 transition group-hover:translate-x-0.5 group-hover:opacity-100" />}
+                  {s.done && <span className="sr-only">(done)</span>}
                 </Link>
               </li>
             ))}
           </ol>
-        </Card>
+        </section>
       )}
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat label="Sales today" value={money(todaySales.revenue)} hint={`${todaySales.orders} orders`} />
-        <Stat label="Sales (30 days)" value={money(sales.revenue)} hint={`${sales.orders} orders`} />
-        <Stat label="Units in stock" value={int(units)} hint={`${skus.length} SKUs · ${money(value)} at cost`} />
-        <Stat label="Needs attention" value={low.length + expiring.length} hint={`${low.length} low stock · ${expiring.length} expiring batches`} tone={low.length + expiring.length ? "amber" : undefined} />
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <Stat icon={IndianRupee} label="Sales today" value={money(todaySales.revenue)} hint={`${todaySales.orders} ${todaySales.orders === 1 ? "order" : "orders"}`} href="/app/orders" />
+        <Stat icon={TrendingUp} label="Last 30 days" value={money(sales.revenue)} hint={`${sales.orders} ${sales.orders === 1 ? "order" : "orders"}`} href="/app/reports" />
+        <Stat icon={Boxes} label="Units in stock" value={int(units)} hint={`${skus.length} SKUs · ${money(value)} at cost`} href="/app/inventory" />
+        <Stat
+          icon={AlertTriangle}
+          label="Needs attention"
+          value={attention}
+          hint={attention ? `${low.length} low · ${expiring.length} expiring` : "All clear"}
+          tone={attention ? "amber" : undefined}
+          href={low.length || !expiring.length ? "/app/inventory?filter=low" : "/app/batches"}
+        />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Card title="Sales — last 30 days" className="lg:col-span-2">
-          <DailyColumns days={days} values={days.map((d) => sales.byDay.get(d) ?? 0)} format={(n) => money(n)} />
+        <Card title="Sales — last 30 days" className="lg:col-span-2" actions={sales.revenue > 0 && <span className="text-sm text-subtle">{money(sales.revenue)} · {sales.orders} orders</span>}>
+          <DailyColumns
+            days={days}
+            values={days.map((d) => sales.byDay.get(d) ?? 0)}
+            format={(n) => money(n)}
+            empty={
+              <div>
+                <p className="font-medium text-ink">No sales in the last 30 days yet</p>
+                <p className="mt-1 text-sm text-subtle">Ring up a counter sale or connect a marketplace — orders show up here.</p>
+                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                  <Link href="/app/pos" className="btn btn-sm">New offline sale</Link>
+                  <Link href="/app/channels" className="btn btn-sm btn-primary">Connect a channel</Link>
+                </div>
+              </div>
+            }
+          />
         </Card>
         <Card title="By channel (30 days)">
           {sales.byChannel.length ? (
             <Bars rows={sales.byChannel.map((c) => ({ label: c.name, value: c.revenue, display: `${money(c.revenue)} · ${c.units} units`, tone: channelTone[c.type] }))} />
-          ) : <p className="text-sm text-slate-500">No sales yet.</p>}
+          ) : (
+            <div className="flex h-full flex-col justify-center py-6 text-center">
+              <p className="text-sm text-subtle">Sales split by Website, Amazon, Flipkart and your counter appear here.</p>
+              <Link href="/app/channels" className="link mt-2 text-sm">Set up channels →</Link>
+            </div>
+          )}
         </Card>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Card title={<span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-amber-500" /> Low stock</span>} pad={false} actions={<Link href="/app/inventory?filter=low" className="link text-xs">View all</Link>}>
+        <Card title={<span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-amber-600" /> Low stock</span>} pad={false} actions={<Link href="/app/inventory?filter=low" className="link text-xs">View all</Link>}>
           {low.length ? (
             <table className="table">
               <thead><tr><th>SKU</th><th>Product</th><th className="text-right">On hand</th><th className="text-right">Reorder at</th></tr></thead>
@@ -87,13 +136,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             </table>
           ) : <Empty>All SKUs are above their reorder level.</Empty>}
         </Card>
-        <Card title={<span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-red-500" /> Expiring within 90 days</span>} pad={false} actions={<Link href="/app/batches" className="link text-xs">View all</Link>}>
+        <Card title={<span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-red-600" /> Expiring within 90 days</span>} pad={false} actions={<Link href="/app/batches" className="link text-xs">View all</Link>}>
           {expiring.length ? (
             <table className="table">
               <thead><tr><th>Batch</th><th>Product</th><th>Expiry</th><th className="text-right">Qty</th></tr></thead>
               <tbody>{expiring.slice(0, 8).map((b) => {
                 const d = daysUntil(b.expiryDate!);
-                return <tr key={b.id}><td className="font-mono text-xs">{b.batchNo}</td><td>{b.name}</td><td><Badge tone={d < 0 ? "red" : d <= 30 ? "red" : "amber"}>{d < 0 ? "Expired" : `${d} days`}</Badge> <span className="text-xs text-slate-500">{date(b.expiryDate)}</span></td><td className="text-right">{b.quantity}</td></tr>;
+                return <tr key={b.id}><td className="font-mono text-xs">{b.batchNo}</td><td>{b.name}</td><td className="whitespace-nowrap"><Badge tone={d < 0 ? "red" : d <= 30 ? "red" : "amber"}>{d < 0 ? "Expired" : `${d} days`}</Badge><div className="mt-0.5 text-xs text-subtle">{date(b.expiryDate)}</div></td><td className="text-right">{b.quantity}</td></tr>;
               })}</tbody>
             </table>
           ) : <Empty>No batches expiring soon.</Empty>}

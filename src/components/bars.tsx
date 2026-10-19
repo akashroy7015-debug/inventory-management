@@ -21,8 +21,16 @@ export function Bars({ rows }: { rows: { label: string; value: number; display: 
 }
 
 /** Daily column chart for the last N days. */
-export function DailyColumns({ days, values, format }: { days: string[]; values: number[]; format: (n: number) => string }) {
+export function DailyColumns({ days, values, format, empty }: { days: string[]; values: number[]; format: (n: number) => string; empty?: React.ReactNode }) {
   const max = Math.max(1, ...values);
+  if (empty && values.every((v) => v === 0)) {
+    return (
+      <div className="relative flex h-40 items-end gap-1">
+        {days.map((d, i) => <div key={d} aria-hidden="true" className="flex-1 rounded-t bg-slate-100" style={{ height: `${18 + ((i * 37) % 50)}%` }} />)}
+        <div className="absolute inset-0 flex items-center justify-center bg-white/70 px-4 text-center backdrop-blur-[1px]">{empty}</div>
+      </div>
+    );
+  }
   return (
     <div className="flex h-40 items-end gap-1">
       {days.map((d, i) => (

@@ -76,7 +76,7 @@ export function OrderBuilder({ skus, channels, mode }: { skus: BuilderSku[]; cha
                 <button key={s.id} type="button" onClick={() => add(s)} disabled={s.stock <= 0}
                   className="rounded-lg border border-slate-200 p-3 text-left text-sm hover:border-brand-500 hover:bg-brand-50 disabled:opacity-40">
                   <div className="font-medium leading-tight">{s.name}</div>
-                  <div className="mt-1 flex justify-between text-xs text-slate-500"><span>{inr(s.price)}</span><span>{s.stock} left</span></div>
+                  <div className="mt-1 flex justify-between text-xs text-slate-500"><span>{inr(s.price)}</span><span className={s.stock <= 0 ? "font-medium text-red-700" : ""}>{s.stock <= 0 ? "Out of stock" : `${s.stock} left`}</span></div>
                 </button>
               ))}
             </div>
