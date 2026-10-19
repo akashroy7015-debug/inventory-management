@@ -8,7 +8,7 @@ export const metadata = { title: "Log in" };
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;
   return (
-    <AuthShell title="Welcome back" subtitle="Log in to manage your inventory.">
+    <AuthShell title="Welcome back" subtitle="Log in to see your stock across every channel.">
       <ActionForm action={login} className="space-y-4">
         <input type="hidden" name="next" value={next ?? ""} />
         <div>
@@ -21,8 +21,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </div>
         <Submit className="btn btn-primary w-full">Log in</Submit>
       </ActionForm>
-      <p className="mt-6 text-center text-sm text-slate-500">
-        New here? <Link href="/signup" className="link">Create an account</Link>
+      <p className="text-center text-[15px] text-muted">
+        New here? <Link href="/signup" className="font-semibold text-brand-700 hover:underline">Create an account</Link>
       </p>
     </AuthShell>
   );
