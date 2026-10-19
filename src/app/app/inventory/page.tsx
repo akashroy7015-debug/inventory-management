@@ -38,12 +38,12 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
             {rows.length ? (
               <table className="table">
                 <thead>
-                  <tr><th>SKU</th><th>Product</th>{locations.map((l) => <th key={l.id} className="text-right">{l.name}</th>)}<th className="text-right">Total</th></tr>
+                  <tr><th className="m-hide">SKU</th><th>Product</th>{locations.map((l) => <th key={l.id} className="text-right">{l.name}</th>)}<th className="text-right">Total</th></tr>
                 </thead>
                 <tbody>{rows.map((s) => (
                   <tr key={s.id}>
-                    <td className="font-mono text-xs"><Link className="link" href={`/app/inventory?sku=${s.id}`}>{s.code}</Link></td>
-                    <td>{s.name}</td>
+                    <td className="m-hide font-mono text-xs"><Link className="link" href={`/app/inventory?sku=${s.id}`}>{s.code}</Link></td>
+                    <td>{s.name}<div className="whitespace-nowrap sm:hidden"><Link className="link font-mono text-xs" href={`/app/inventory?sku=${s.id}`}>{s.code}</Link></div></td>
                     {locations.map((l) => <td key={l.id} className={`text-right ${(s.perLocation[l.id] ?? 0) < 0 ? "text-red-600" : ""}`}>{s.perLocation[l.id] ?? 0}</td>)}
                     <td className="text-right font-semibold">{s.low ? <Badge tone={s.onHand <= 0 ? "red" : "amber"}>{s.onHand}</Badge> : s.onHand}</td>
                   </tr>

@@ -35,17 +35,17 @@ export default async function MovementsPage({ searchParams }: { searchParams: Pr
       <Card pad={false}>
         {moves.length ? (
           <table className="table">
-            <thead><tr><th>When</th><th>SKU</th><th>Location</th><th>Batch</th><th>Type</th><th className="text-right">Qty</th><th>Reference</th><th>By</th></tr></thead>
+            <thead><tr><th>When</th><th>SKU</th><th className="m-hide">Location</th><th className="m-hide">Batch</th><th>Type</th><th className="text-right">Qty</th><th className="m-hide">Reference</th><th className="m-hide">By</th></tr></thead>
             <tbody>{moves.map((m) => (
               <tr key={m.id}>
                 <td className="whitespace-nowrap text-xs text-slate-500">{dateTime(m.createdAt)}</td>
-                <td><span className="font-mono text-xs">{m.sku.code}</span><div className="text-xs text-slate-500">{m.sku.product.name}</div></td>
-                <td>{m.location.name}</td>
-                <td className="font-mono text-xs">{m.batch?.batchNo ?? "—"}</td>
+                <td><span className="font-mono text-xs">{m.sku.code}</span><div className="text-xs text-slate-500">{m.sku.product.name}</div><div className="text-xs text-slate-500 sm:hidden">{m.location.name}</div></td>
+                <td className="m-hide">{m.location.name}</td>
+                <td className="m-hide font-mono text-xs">{m.batch?.batchNo ?? "—"}</td>
                 <td><Badge tone={m.quantity > 0 ? "green" : "red"}>{label(m.type)}</Badge></td>
                 <td className={`text-right font-semibold ${m.quantity > 0 ? "text-green-700" : "text-red-600"}`}>{m.quantity > 0 ? "+" : ""}{m.quantity}</td>
-                <td className="text-xs">{m.order ? <Link className="link" href={`/app/orders/${m.order.id}`}>{m.reference}</Link> : m.reference ?? "—"}{m.note && <div className="text-slate-500">{m.note}</div>}</td>
-                <td className="text-xs text-slate-500">{m.user?.name ?? "API"}</td>
+                <td className="m-hide text-xs">{m.order ? <Link className="link" href={`/app/orders/${m.order.id}`}>{m.reference}</Link> : m.reference ?? "—"}{m.note && <div className="text-slate-500">{m.note}</div>}</td>
+                <td className="m-hide text-xs text-slate-500">{m.user?.name ?? "API"}</td>
               </tr>
             ))}</tbody>
           </table>

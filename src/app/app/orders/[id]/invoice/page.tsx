@@ -66,7 +66,8 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
             {order.paymentMethod && <p className="text-slate-600">Paid by {order.paymentMethod}</p>}
           </div>
         </section>
-        <table className="mt-4 w-full text-left text-xs">
+        <div className="-mx-1 overflow-x-auto px-1 print:overflow-visible">
+        <table className="mt-4 w-full min-w-[520px] text-left text-xs print:min-w-0">
           <thead className="border-b bg-slate-50">
             <tr>
               <th className="p-2">#</th><th className="p-2">Item</th><th className="p-2">HSN</th><th className="p-2 text-right">Qty</th>
@@ -91,6 +92,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
             ))}
           </tbody>
         </table>
+        </div>
         <section className="ml-auto mt-4 w-72 space-y-1">
           <div className="flex justify-between"><span>Taxable value</span><span>{money(taxable)}</span></div>
           {sameState ? (

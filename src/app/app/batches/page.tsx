@@ -28,17 +28,17 @@ export default async function BatchesPage({ searchParams }: { searchParams: Prom
       <Card pad={false}>
         {rows.length ? (
           <table className="table">
-            <thead><tr><th>Batch</th><th>SKU</th><th>Product</th><th>Location</th><th>Mfg</th><th>Expiry</th><th className="text-right">Qty</th></tr></thead>
+            <thead><tr><th>Batch</th><th className="m-hide">SKU</th><th>Product</th><th className="m-hide">Location</th><th className="m-hide">Mfg</th><th>Expiry</th><th className="text-right">Qty</th></tr></thead>
             <tbody>{rows.map((b) => {
               const d = b.expiryDate ? daysUntil(b.expiryDate) : null;
               return (
                 <tr key={b.id}>
                   <td className="font-mono text-xs">{b.batchNo}</td>
-                  <td className="font-mono text-xs">{b.skuCode}</td>
-                  <td>{b.name}</td>
-                  <td>{b.location}</td>
-                  <td>{date(b.mfgDate)}</td>
-                  <td>{date(b.expiryDate)} {d !== null && <Badge tone={d < 0 ? "red" : d <= 30 ? "red" : d <= 90 ? "amber" : "green"}>{d < 0 ? "Expired" : `${d}d`}</Badge>}</td>
+                  <td className="m-hide font-mono text-xs">{b.skuCode}</td>
+                  <td>{b.name}<div className="text-xs text-slate-500 sm:hidden">{b.location}</div></td>
+                  <td className="m-hide">{b.location}</td>
+                  <td className="m-hide">{date(b.mfgDate)}</td>
+                  <td className="whitespace-nowrap">{date(b.expiryDate)} {d !== null && <Badge tone={d < 0 ? "red" : d <= 30 ? "red" : d <= 90 ? "amber" : "green"}>{d < 0 ? "Expired" : `${d}d`}</Badge>}</td>
                   <td className="text-right font-semibold">{b.quantity}</td>
                 </tr>
               );

@@ -84,9 +84,9 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         <Card title="Top products" pad={false}>
           {sales.bySku.length ? (
             <table className="table">
-              <thead><tr><th>SKU</th><th>Product</th><th className="text-right">Units</th><th className="text-right">Revenue</th></tr></thead>
+              <thead><tr><th className="m-hide">SKU</th><th>Product</th><th className="text-right">Units</th><th className="text-right">Revenue</th></tr></thead>
               <tbody>{sales.bySku.slice(0, 15).map((s) => (
-                <tr key={s.code}><td className="font-mono text-xs">{s.code}</td><td>{s.name}</td><td className="text-right">{int(s.units)}</td><td className="text-right">{money(s.revenue)}</td></tr>
+                <tr key={s.code}><td className="m-hide font-mono text-xs">{s.code}</td><td>{s.name}<div className="whitespace-nowrap font-mono text-xs text-slate-500 sm:hidden">{s.code}</div></td><td className="text-right">{int(s.units)}</td><td className="text-right">{money(s.revenue)}</td></tr>
               ))}</tbody>
             </table>
           ) : <Empty>No sales in this period.</Empty>}

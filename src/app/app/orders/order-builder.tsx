@@ -35,10 +35,10 @@ export function OrderBuilder({ skus, channels, mode }: { skus: BuilderSku[]; cha
   const total = Math.max(0, subtotal - discount) + shipping;
 
   return (
-    <ActionForm action={createOrderAction} className="grid gap-6 lg:grid-cols-[1fr_360px]">
+    <ActionForm action={createOrderAction} className="grid grid-cols-1 gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_360px] lg:pb-0">
       <input type="hidden" name="mode" value={mode} />
       <input type="hidden" name="items" value={JSON.stringify(lines)} />
-      <div className="space-y-4">
+      <div className="min-w-0 space-y-4">
         <div className="card card-pad">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -83,31 +83,37 @@ export function OrderBuilder({ skus, channels, mode }: { skus: BuilderSku[]; cha
           )}
         </div>
 
-        <div className="card overflow-x-auto">
-          <table className="table">
-            <thead><tr><th>Item</th><th className="w-32">Qty</th><th className="w-32">Price (incl. GST)</th><th className="text-right">Total</th><th /></tr></thead>
-            <tbody>
-              {lines.length === 0 && <tr><td colSpan={5} className="py-8 text-center text-slate-500">No items yet — search above to add.</td></tr>}
-              {lines.map((l, i) => {
-                const s = byId.get(l.skuId)!;
-                return (
-                  <tr key={l.skuId}>
-                    <td>{s.name}<div className="font-mono text-xs text-slate-500">{s.code} · {s.stock} in stock{l.quantity > s.stock && <span className="text-red-600"> · short</span>}</div></td>
-                    <td>
-                      <div className="flex items-center gap-1">
-                        <button type="button" className="btn btn-sm" onClick={() => set(i, { quantity: Math.max(1, l.quantity - 1) })} aria-label="Less"><Minus className="h-3 w-3" /></button>
-                        <input className="input w-14 px-1 text-center" type="number" min="1" value={l.quantity} onChange={(e) => set(i, { quantity: Math.max(1, Number(e.target.value) || 1) })} aria-label="Quantity" />
-                        <button type="button" className="btn btn-sm" onClick={() => set(i, { quantity: l.quantity + 1 })} aria-label="More"><Plus className="h-3 w-3" /></button>
-                      </div>
-                    </td>
-                    <td><input className="input" type="number" min="0" step="0.01" value={l.unitPrice} onChange={(e) => set(i, { unitPrice: Number(e.target.value) || 0 })} aria-label="Unit price" /></td>
-                    <td className="text-right font-medium">{inr(l.quantity * l.unitPrice)}</td>
-                    <td><button type="button" className="btn btn-sm btn-danger" onClick={() => setLines((ls) => ls.filter((_, j) => j !== i))} aria-label="Remove"><Trash2 className="h-3.5 w-3.5" /></button></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="card">
+          <div className="hidden grid-cols-[minmax(0,1fr)_8.5rem_7rem_6rem_2.5rem] gap-3 border-b border-line bg-mist px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:grid">
+            <span>Item</span><span>Qty</span><span>Price (incl. GST)</span><span className="text-right">Total</span><span />
+          </div>
+          {lines.length === 0 && <p className="px-4 py-8 text-center text-sm text-slate-500">No items yet — search above to add.</p>}
+          <ul className="divide-y divide-slate-100">
+            {lines.map((l, i) => {
+              const s = byId.get(l.skuId)!;
+              return (
+                <li key={l.skuId} className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2.5 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_8.5rem_7rem_6rem_2.5rem]">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-ink">{s.name}</div>
+                    <div className="font-mono text-xs text-slate-500">{s.code} · {s.stock} in stock{l.quantity > s.stock && <span className="text-red-600"> · short</span>}</div>
+                  </div>
+                  <button type="button" className="flex h-10 w-10 items-center justify-center rounded-lg text-red-600 hover:bg-red-50 sm:order-last" onClick={() => setLines((ls) => ls.filter((_, j) => j !== i))} aria-label={`Remove ${s.name}`}><Trash2 className="h-4 w-4" /></button>
+                  <div className="col-span-2 flex items-center gap-3 sm:contents">
+                    <div className="flex items-center rounded-lg border border-slate-300">
+                      <button type="button" className="flex h-10 w-10 items-center justify-center text-slate-600" onClick={() => set(i, { quantity: Math.max(1, l.quantity - 1) })} aria-label="Less"><Minus className="h-4 w-4" /></button>
+                      <input className="h-10 w-12 border-x border-slate-300 bg-white text-center text-sm outline-none" inputMode="numeric" type="number" min="1" value={l.quantity} onChange={(e) => set(i, { quantity: Math.max(1, Number(e.target.value) || 1) })} aria-label="Quantity" />
+                      <button type="button" className="flex h-10 w-10 items-center justify-center text-slate-600" onClick={() => set(i, { quantity: l.quantity + 1 })} aria-label="More"><Plus className="h-4 w-4" /></button>
+                    </div>
+                    <label className="flex min-w-0 flex-1 items-center gap-1 sm:flex-none">
+                      <span className="whitespace-nowrap text-sm text-slate-500 sm:hidden">@ ₹</span>
+                      <input className="input min-w-0" inputMode="decimal" type="number" min="0" step="0.01" value={l.unitPrice} onChange={(e) => set(i, { unitPrice: Number(e.target.value) || 0 })} aria-label="Unit price" />
+                    </label>
+                    <div className="ml-auto text-right text-sm font-semibold sm:ml-0">{inr(l.quantity * l.unitPrice)}</div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </div>
 
@@ -175,6 +181,16 @@ export function OrderBuilder({ skus, channels, mode }: { skus: BuilderSku[]; cha
           <Submit className="btn btn-primary w-full py-3 text-base">{mode === "pos" ? "Complete sale & print bill" : "Create order"}</Submit>
         </div>
       </div>
+
+      {lines.length > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-20 flex items-center gap-3 border-t border-line bg-white/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:hidden print:hidden">
+          <div className="min-w-0">
+            <div className="text-xs text-subtle">{(() => { const n = lines.reduce((t, l) => t + l.quantity, 0); return `${n} ${n === 1 ? "item" : "items"}`; })()}</div>
+            <div className="font-display text-xl font-bold text-ink">{inr(total)}</div>
+          </div>
+          <Submit className="btn btn-primary ml-auto min-h-12 px-5 text-base">{mode === "pos" ? "Complete sale" : "Create order"}</Submit>
+        </div>
+      )}
     </ActionForm>
   );
 }

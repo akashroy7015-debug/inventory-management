@@ -43,10 +43,10 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         <div className="space-y-6">
           <Card pad={false}>
             <table className="table">
-              <thead><tr><th>Item</th><th className="text-right">Qty</th><th className="text-right">Price</th><th className="text-right">GST</th><th className="text-right">Total</th></tr></thead>
+              <thead><tr><th>Item</th><th className="text-right">Qty</th><th className="text-right">Price</th><th className="m-hide text-right">GST</th><th className="text-right">Total</th></tr></thead>
               <tbody>
                 {order.items.map((i) => (
-                  <tr key={i.id}><td>{i.name}<div className="font-mono text-xs text-slate-500">{i.skuCode}</div></td><td className="text-right">{i.quantity}</td><td className="text-right">{money(i.unitPrice)}</td><td className="text-right text-slate-500">{Number(i.gstRate)}%</td><td className="text-right">{money(i.total)}</td></tr>
+                  <tr key={i.id}><td>{i.name}<div className="font-mono text-xs text-slate-500">{i.skuCode}</div></td><td className="text-right">{i.quantity}</td><td className="whitespace-nowrap text-right">{money(i.unitPrice)}</td><td className="m-hide text-right text-slate-500">{Number(i.gstRate)}%</td><td className="whitespace-nowrap text-right">{money(i.total)}</td></tr>
                 ))}
               </tbody>
             </table>
@@ -60,11 +60,11 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
           </Card>
           <Card title="Stock movements" pad={false}>
             <table className="table">
-              <thead><tr><th>When</th><th>SKU</th><th>Location</th><th>Batch</th><th>Type</th><th className="text-right">Qty</th></tr></thead>
+              <thead><tr><th>When</th><th>SKU</th><th className="m-hide">Location</th><th className="m-hide">Batch</th><th>Type</th><th className="text-right">Qty</th></tr></thead>
               <tbody>
                 {order.movements.length === 0 && <tr><td colSpan={6} className="text-center text-slate-500">No stock was moved for this order.</td></tr>}
                 {order.movements.map((m) => (
-                  <tr key={m.id}><td className="text-xs text-slate-500">{dateTime(m.createdAt)}</td><td className="font-mono text-xs">{m.sku.code}</td><td>{m.location.name}</td><td className="font-mono text-xs">{m.batch?.batchNo ?? "—"}</td><td>{label(m.type)}</td><td className={`text-right font-semibold ${m.quantity > 0 ? "text-green-700" : "text-red-600"}`}>{m.quantity}</td></tr>
+                  <tr key={m.id}><td className="text-xs text-slate-500">{dateTime(m.createdAt)}</td><td className="font-mono text-xs">{m.sku.code}</td><td className="m-hide">{m.location.name}</td><td className="m-hide font-mono text-xs">{m.batch?.batchNo ?? "—"}</td><td>{label(m.type)}</td><td className={`text-right font-semibold ${m.quantity > 0 ? "text-green-700" : "text-red-600"}`}>{m.quantity}</td></tr>
                 ))}
               </tbody>
             </table>

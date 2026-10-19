@@ -4,6 +4,7 @@ import { requireOrg } from "@/lib/auth";
 import { APP_NAME } from "@/lib/brand";
 import { Sidebar } from "@/components/sidebar";
 import { OrgSwitcher } from "@/components/org-switcher";
+import { InstallAppButton } from "@/components/pwa";
 import { logout, switchOrg } from "../(auth)/actions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -12,6 +13,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const footer = (
     <div className="space-y-2">
       <OrgSwitcher action={switchOrg} current={org.id} orgs={memberships.map((m) => ({ id: m.organizationId, name: m.organization.name }))} />
+      <InstallAppButton className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-3 text-sm font-semibold text-white hover:bg-brand-500" />
       <Link href="/onboarding" className="flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white"><Plus className="h-3.5 w-3.5" /> Add another business</Link>
       <div className="flex items-center gap-2.5 rounded-xl bg-white/5 p-2">
         <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold">{initials}</span>

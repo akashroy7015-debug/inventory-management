@@ -70,17 +70,17 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       <Card pad={false}>
         {orders.length ? (
           <table className="table">
-            <thead><tr><th>Order</th><th>Channel</th><th>Customer</th><th>Date</th><th>Items</th><th>Status</th><th>Payment</th><th className="text-right">Total</th></tr></thead>
+            <thead><tr><th>Order</th><th className="m-hide">Channel</th><th className="m-hide">Customer</th><th className="m-hide">Date</th><th className="m-hide">Items</th><th>Status</th><th className="m-hide">Payment</th><th className="text-right">Total</th></tr></thead>
             <tbody>{orders.map((o) => (
               <tr key={o.id}>
-                <td><Link href={`/app/orders/${o.id}`} className="link">{o.orderNumber}</Link>{o.externalOrderId && <div className="text-xs text-slate-500">{o.externalOrderId}</div>}</td>
-                <td><Badge tone={channelTone[o.channel.type]}>{o.channel.name}</Badge></td>
-                <td>{o.customerName ?? "—"}{o.customerPhone && <div className="text-xs text-slate-500">{o.customerPhone}</div>}</td>
-                <td className="whitespace-nowrap">{date(o.orderDate)}</td>
-                <td>{o._count.items}</td>
+                <td><Link href={`/app/orders/${o.id}`} className="link">{o.orderNumber}</Link>{o.externalOrderId && <div className="text-xs text-slate-500">{o.externalOrderId}</div>}<div className="text-xs text-slate-500 sm:hidden">{o.channel.name} · {date(o.orderDate)}{o.customerName ? ` · ${o.customerName}` : ""}</div></td>
+                <td className="m-hide"><Badge tone={channelTone[o.channel.type]}>{o.channel.name}</Badge></td>
+                <td className="m-hide">{o.customerName ?? "—"}{o.customerPhone && <div className="text-xs text-slate-500">{o.customerPhone}</div>}</td>
+                <td className="m-hide whitespace-nowrap">{date(o.orderDate)}</td>
+                <td className="m-hide">{o._count.items}</td>
                 <td><Badge tone={statusTone[o.status]}>{label(o.status)}</Badge></td>
-                <td><Badge tone={statusTone[o.paymentStatus]}>{o.paymentStatus === "COD" ? "COD" : label(o.paymentStatus)}</Badge></td>
-                <td className="text-right font-medium">{money(o.total)}</td>
+                <td className="m-hide"><Badge tone={statusTone[o.paymentStatus]}>{o.paymentStatus === "COD" ? "COD" : label(o.paymentStatus)}</Badge></td>
+                <td className="whitespace-nowrap text-right font-medium">{money(o.total)}</td>
               </tr>
             ))}</tbody>
           </table>

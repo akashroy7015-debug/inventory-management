@@ -129,9 +129,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <Card title={<span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-amber-600" /> Low stock</span>} pad={false} actions={<Link href="/app/inventory?filter=low" className="link text-xs">View all</Link>}>
           {low.length ? (
             <table className="table">
-              <thead><tr><th>SKU</th><th>Product</th><th className="text-right">On hand</th><th className="text-right">Reorder at</th></tr></thead>
+              <thead><tr><th className="m-hide">SKU</th><th>Product</th><th className="text-right">On hand</th><th className="text-right">Reorder at</th></tr></thead>
               <tbody>{low.slice(0, 8).map((s) => (
-                <tr key={s.id}><td className="font-mono text-xs">{s.code}</td><td>{s.name}</td><td className={`text-right font-semibold ${s.onHand <= 0 ? "text-red-600" : "text-amber-600"}`}>{s.onHand}</td><td className="text-right text-slate-500">{s.threshold}</td></tr>
+                <tr key={s.id}><td className="m-hide font-mono text-xs">{s.code}</td><td>{s.name}<div className="whitespace-nowrap font-mono text-xs text-slate-500 sm:hidden">{s.code}</div></td><td className={`text-right font-semibold ${s.onHand <= 0 ? "text-red-600" : "text-amber-600"}`}>{s.onHand}</td><td className="text-right text-slate-500">{s.threshold}</td></tr>
               ))}</tbody>
             </table>
           ) : <Empty>All SKUs are above their reorder level.</Empty>}
@@ -139,10 +139,10 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <Card title={<span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-red-600" /> Expiring within 90 days</span>} pad={false} actions={<Link href="/app/batches" className="link text-xs">View all</Link>}>
           {expiring.length ? (
             <table className="table">
-              <thead><tr><th>Batch</th><th>Product</th><th>Expiry</th><th className="text-right">Qty</th></tr></thead>
+              <thead><tr><th className="m-hide">Batch</th><th>Product</th><th>Expiry</th><th className="text-right">Qty</th></tr></thead>
               <tbody>{expiring.slice(0, 8).map((b) => {
                 const d = daysUntil(b.expiryDate!);
-                return <tr key={b.id}><td className="font-mono text-xs">{b.batchNo}</td><td>{b.name}</td><td className="whitespace-nowrap"><Badge tone={d < 0 ? "red" : d <= 30 ? "red" : "amber"}>{d < 0 ? "Expired" : `${d} days`}</Badge><div className="mt-0.5 text-xs text-subtle">{date(b.expiryDate)}</div></td><td className="text-right">{b.quantity}</td></tr>;
+                return <tr key={b.id}><td className="m-hide font-mono text-xs">{b.batchNo}</td><td>{b.name}<div className="whitespace-nowrap font-mono text-xs text-slate-500 sm:hidden">{b.batchNo}</div></td><td className="whitespace-nowrap"><Badge tone={d < 0 ? "red" : d <= 30 ? "red" : "amber"}>{d < 0 ? "Expired" : `${d} days`}</Badge><div className="mt-0.5 text-xs text-subtle">{date(b.expiryDate)}</div></td><td className="text-right">{b.quantity}</td></tr>;
               })}</tbody>
             </table>
           ) : <Empty>No batches expiring soon.</Empty>}
@@ -152,15 +152,15 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       <Card title="Recent orders" className="mt-6" pad={false} actions={<Link href="/app/orders" className="link text-xs">All orders</Link>}>
         {recent.length ? (
           <table className="table">
-            <thead><tr><th>Order</th><th>Channel</th><th>Customer</th><th>Date</th><th>Status</th><th className="text-right">Total</th></tr></thead>
+            <thead><tr><th>Order</th><th className="m-hide">Channel</th><th className="m-hide">Customer</th><th className="m-hide">Date</th><th>Status</th><th className="text-right">Total</th></tr></thead>
             <tbody>{recent.map((o) => (
               <tr key={o.id}>
-                <td><Link href={`/app/orders/${o.id}`} className="link">{o.orderNumber}</Link>{o.externalOrderId && <div className="text-xs text-slate-500">{o.externalOrderId}</div>}</td>
-                <td><Badge tone={channelTone[o.channel.type]}>{o.channel.name}</Badge></td>
-                <td>{o.customerName ?? "—"}</td>
-                <td>{date(o.orderDate)}</td>
+                <td><Link href={`/app/orders/${o.id}`} className="link">{o.orderNumber}</Link>{o.externalOrderId && <div className="text-xs text-slate-500">{o.externalOrderId}</div>}<div className="text-xs text-slate-500 sm:hidden">{o.channel.name} · {date(o.orderDate)}</div></td>
+                <td className="m-hide"><Badge tone={channelTone[o.channel.type]}>{o.channel.name}</Badge></td>
+                <td className="m-hide">{o.customerName ?? "—"}</td>
+                <td className="m-hide">{date(o.orderDate)}</td>
                 <td><Badge tone={statusTone[o.status]}>{label(o.status)}</Badge></td>
-                <td className="text-right font-medium">{money(o.total)}</td>
+                <td className="whitespace-nowrap text-right font-medium">{money(o.total)}</td>
               </tr>
             ))}</tbody>
           </table>
