@@ -29,8 +29,10 @@ function LocationSelect({ locations, name = "locationId", label = "Location", de
   );
 }
 
-export function StockForms({ skus, locations, defaultSku }: { skus: Opt[]; locations: Opt[]; defaultSku?: string }) {
-  const [tab, setTab] = useState<"in" | "adjust" | "transfer">("in");
+type Tab = "in" | "adjust" | "transfer";
+
+export function StockForms({ skus, locations, defaultSku, defaultTab = "in", defaultTo }: { skus: Opt[]; locations: Opt[]; defaultSku?: string; defaultTab?: Tab; defaultTo?: string }) {
+  const [tab, setTab] = useState<Tab>(defaultTab);
   const tabs = [
     { id: "in", label: "Stock in" },
     { id: "adjust", label: "Adjust / count" },
@@ -40,7 +42,7 @@ export function StockForms({ skus, locations, defaultSku }: { skus: Opt[]; locat
     <div className="card">
       <div className="flex border-b border-slate-100">
         {tabs.map((t) => (
-          <button key={t.id} type="button" onClick={() => setTab(t.id)}
+          <button key={t.id} type="button" onClick={() => setTab(t.id)} aria-pressed={tab === t.id}
             className={`flex-1 px-3 py-3 text-sm font-medium ${tab === t.id ? "border-b-2 border-brand-600 text-brand-700" : "text-slate-500 hover:text-slate-800"}`}>
             {t.label}
           </button>
@@ -100,8 +102,8 @@ export function StockForms({ skus, locations, defaultSku }: { skus: Opt[]; locat
           <ActionForm action={transfer} reset className="space-y-3">
             <SkuSelect skus={skus} defaultValue={defaultSku} />
             <div className="grid grid-cols-2 gap-3">
-              <LocationSelect locations={locations} name="fromId" label="From" />
-              <LocationSelect locations={locations} name="toId" label="To" defaultValue={locations[1]?.id} />
+              <LocationSelect locations={locations} name="fromId" label="From" defaultValue={locations.find((l) => l.id !== defaultTo)?.id} />
+              <LocationSelect locations={locations} name="toId" label="To" defaultValue={defaultTo ?? locations[1]?.id} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="label">Quantity</label><input className="input" name="quantity" type="number" min="1" step="1" required /></div>
