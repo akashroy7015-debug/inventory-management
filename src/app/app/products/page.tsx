@@ -31,15 +31,15 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       <Card pad={false}>
         {rows.length ? (
           <table className="table">
-            <thead><tr><th>Product</th><th>SKU</th><th>Brand</th><th className="text-right">MRP</th><th className="text-right">Price</th><th className="text-right">GST</th><th className="text-right">In stock</th></tr></thead>
+            <thead><tr><th>Product</th><th className="m-hide">SKU</th><th className="m-hide">Brand</th><th className="m-hide text-right">MRP</th><th className="text-right">Price</th><th className="m-hide text-right">GST</th><th className="text-right">In stock</th></tr></thead>
             <tbody>{rows.map((s) => (
               <tr key={s.id}>
-                <td><Link href={`/app/products/${s.productId}`} className="link">{s.productName}</Link>{s.variantName && <span className="text-slate-500"> — {s.variantName}</span>}</td>
-                <td className="font-mono text-xs">{s.code}</td>
-                <td>{s.brand ?? "—"}</td>
-                <td className="text-right text-slate-500">{money(s.mrp)}</td>
+                <td><Link href={`/app/products/${s.productId}`} className="link">{s.productName}</Link>{s.variantName && <span className="text-slate-500"> — {s.variantName}</span>}<div className="whitespace-nowrap font-mono text-xs text-slate-500 sm:hidden">{s.code}</div></td>
+                <td className="m-hide font-mono text-xs">{s.code}</td>
+                <td className="m-hide">{s.brand ?? "—"}</td>
+                <td className="m-hide text-right text-slate-500">{money(s.mrp)}</td>
                 <td className="text-right">{money(s.price)}</td>
-                <td className="text-right">{s.gstRate}%</td>
+                <td className="m-hide text-right">{s.gstRate}%</td>
                 <td className="text-right">{s.low ? <Badge tone={s.onHand <= 0 ? "red" : "amber"}>{s.onHand}</Badge> : s.onHand}</td>
               </tr>
             ))}</tbody>

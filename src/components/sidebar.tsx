@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { LogoMark } from "./logo";
+import { InstallAppButton } from "./pwa";
 import {
   BarChart3, Boxes, CalendarClock, Code2, LayoutDashboard, Menu, Package, Plug,
   Settings, ShoppingCart, Store, Warehouse, X,
@@ -44,13 +45,16 @@ export function Sidebar({ appName, footer }: { appName: string; footer: React.Re
   const isActive = (href: string) => (href === "/app" ? pathname === "/app" : pathname.startsWith(href));
   return (
     <>
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-white/90 px-4 py-3 backdrop-blur lg:hidden print:hidden">
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-white/90 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur lg:hidden print:hidden">
         <Link href="/app" className="flex items-center gap-2 font-display text-lg font-bold tracking-[-0.02em] text-ink"><LogoMark className="h-7 w-7" />{appName}</Link>
-        <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-line text-ink" onClick={() => setOpen(!open)} aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open}>
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <InstallAppButton className="flex h-11 items-center gap-1.5 rounded-xl bg-brand-600 px-3 text-sm font-semibold text-white" />
+          <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-line text-ink" onClick={() => setOpen(!open)} aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open}>
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
-      <aside className={`${open ? "flex" : "hidden"} fixed inset-y-0 left-0 z-40 w-64 flex-col bg-ink text-white lg:flex print:hidden`}>
+      <aside className={`${open ? "flex" : "hidden"} fixed inset-y-0 left-0 z-40 w-64 flex-col bg-ink pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-white lg:flex print:hidden`}>
         <Link href="/app" className="flex items-center gap-2.5 px-5 py-5 font-display text-xl font-bold tracking-[-0.02em]">
           <LogoMark /> {appName}
         </Link>
